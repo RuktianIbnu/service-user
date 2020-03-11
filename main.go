@@ -14,5 +14,5 @@ func main() {
 
 	router.POST("/service-user/login", inDB.LoginUser)
 	router.POST("/service-user/register", inDB.UserRegistration)
-	router.Run(":3030")
+	router.Run(":3300")
 }

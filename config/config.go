@@ -3,6 +3,7 @@ package config
 import (
 	"../structs"
 	"github.com/jinzhu/gorm"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // DBInit create connection to DB

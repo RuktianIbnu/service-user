@@ -13,6 +13,7 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 	var (
 		user structs.User
 		newUser structs.User
+
 		err = c.Bind(&user)
 	)
 
@@ -26,9 +27,8 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 		})
 	}
 
-	EmailIsExist := idb.CekEmail(email)
+	EmailIsExist := idb.CekEmailLogin(email)
 	Pass := GetPwd(password) 
-	//EncryptPass := HashAndSalt(Pass)
 
 	idb.DB.Select("password").Where(" email = ?", email).Find(&user)
 	passToString := user.Password
@@ -38,8 +38,7 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 	if EmailIsExist == false {
 		c.JSON(http.StatusUnauthorized, gin.H {
 			"status": "warning",
-			"pesan": "Nip Tidak Terdaftar",
-			"passToString": Pass,
+			"pesan": "Email Tidak Terdaftar",
 		})
 	} else if matchPass == false {
 		c.JSON(http.StatusUnauthorized, gin.H {
@@ -49,17 +48,21 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 	} else if matchPass == true && EmailIsExist == true {
 		sign := jwt.New(jwt.GetSigningMethod("HS256")) // hs256 
 		
+		idb.DB.Where("email = ?", email).First(&user)
 		claims := sign.Claims.(jwt.MapClaims)
-		claims["nama"] 		= user.Nama
-		claims["email"] 	= user.Email
+		claims["nama"]		= user.Nama
+		claims["email"]		= user.Email
 		claims["jabatan"]	= user.Jabatan
 		claims["role"]		= user.Role
-
+		claims["instansi"]	= user.Instansi
+		
 		token, err := sign.SignedString([]byte("secret"))
 
 		newUser.Token = token
 		update := idb.DB.Model(&user).Where("email = ?", email).Updates(newUser).Error
-
+		
+		claims["token"]		= token
+		
 		if update != nil {
 			c.JSON(http.StatusInternalServerError, gin.H {
 				"pesan": err.Error(),
@@ -76,11 +79,10 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 		}
 		
 		c.JSON(http.StatusOK, gin.H {
-			"token": token,
-			"data_user": claims,
+			"session_user": claims,
+			
 			"status": "success",
 			"pesan": "Login Berhasil",
-			"detail_user": user,
 		})
 	}
 }

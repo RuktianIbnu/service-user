@@ -29,7 +29,6 @@ func (idb *InDB) UserRegistration(c *gin.Context){
 	user.Jabatan 	= jabatan
 	user.Instansi 	= instansi
 	user.Kontak 	= kontak
-	user.Password 	= password
 	user.Role 		= role
 
 	if nama == "" || email == "" || password == "" {
@@ -40,6 +39,9 @@ func (idb *InDB) UserRegistration(c *gin.Context){
 	} else {
 		cekEmail := idb.CekEmail(email)
 		if cekEmail == true {
+			passbyte := GetPwd(password)
+			hashpass := HashAndSalt(passbyte)
+			user.Password = hashpass
 			status := idb.DB.Create(&user).Error
 			if status != nil {
 				result = gin.H {
@@ -54,6 +56,7 @@ func (idb *InDB) UserRegistration(c *gin.Context){
 			}
 		} else  {
 			result = gin.H {
+				"cekEmai": cekEmail,
 				"status": "warning",
 				"pesan": "Email sudah digunakan",
 			}
