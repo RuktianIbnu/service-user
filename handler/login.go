@@ -61,8 +61,6 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 		newUser.Token = token
 		update := idb.DB.Model(&user).Where("email = ?", email).Updates(newUser).Error
 		
-		claims["token"]		= token
-		
 		if update != nil {
 			c.JSON(http.StatusInternalServerError, gin.H {
 				"pesan": err.Error(),
@@ -83,6 +81,7 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 			
 			"status": "success",
 			"pesan": "Login Berhasil",
+			"token": token,
 		})
 	}
 }
