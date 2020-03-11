@@ -3,7 +3,9 @@ package handler
 import (
 	"net/http"
 	"../structs"
+
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func (idb *InDB) UserRegistration(c *gin.Context){
@@ -36,41 +38,25 @@ func (idb *InDB) UserRegistration(c *gin.Context){
 				"pesan": "Silahkan lengkapi lembar isian",
 		}
 	} else {
-		status := idb.DB.Create(&user).Error
-		if status != nil {
-			result = gin.H {
-				"status": "Error",
-				"pesan": "Gagal Registrasi",
+		cekEmail := idb.CekEmail(email)
+		if cekEmail == true {
+			status := idb.DB.Create(&user).Error
+			if status != nil {
+				result = gin.H {
+					"status": "Error",
+					"pesan": "Gagal Registrasi",
+				}
+			} else {
+				result = gin.H {
+					"status": "Success",
+					"pesan": "Registrasi berhasil, silahkan login",
+				}
 			}
-		} else {
+		} else  {
 			result = gin.H {
-				"status": "Success",
-				"pesan": "Registrasi berhasil, silahkan login",
+				"status": "warning",
+				"pesan": "Email sudah digunakan",
 			}
-		}
-	}
-	c.JSON(http.StatusOK, result)
-}
-
-func (idb *InDB) LoginUser(c gin.Context) {
-	var (
-		user structs.User
-		result gin.H
-	)
-
-	email := c.PostForm("email")
-	password :=  c.PostForm("password")
-
-	cekUser := idb.CekUser(email, password)
-	if cekUser == false {
-		result = gin.H{
-			"status": "warning",
-			"pesan": "email dan password tidak sesuai",
-		}
-	} else {
-		result = gin.H{
-			"status": "success",
-			"pesan": "Berhasil login",
 		}
 	}
 	c.JSON(http.StatusOK, result)
