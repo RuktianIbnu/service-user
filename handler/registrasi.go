@@ -56,7 +56,6 @@ func (idb *InDB) UserRegistration(c *gin.Context){
 			}
 		} else  {
 			result = gin.H {
-				"cekEmai": cekEmail,
 				"status": "warning",
 				"pesan": "Email sudah digunakan",
 			}
