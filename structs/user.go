@@ -1,9 +1,12 @@
 package structs
 
-import "github.com/jinzhu/gorm"
+import "time"
 
 type User struct{
-	gorm.Model
+	ID        uint       `json:"-" gorm:"primary_key"`
+	CreatedAt time.Time  `json:"-"`
+	UpdatedAt time.Time  `json:"-"`
+	DeletedAt *time.Time `json:"-" sql:"index"`
 	Email		string
 	Nama 		string
 	Nip 		string

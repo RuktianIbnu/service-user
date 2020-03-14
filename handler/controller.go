@@ -12,16 +12,23 @@ import (
     _ "github.com/go-sql-driver/mysql"
 )
 
-func (idb *InDB) CekEmailLogin(email string) bool{
+func (idb *InDB) CekEmailOrNipLogin(emailORnip string) bool{
 	var (
 		user structs.User
+		hasil bool
 	)
-	idb.DB.Where("email = ?", email).First(&user)
+	idb.DB.Where("email = ?", emailORnip).First(&user)
 	if user.Email == "" {
-		return false	
+		idb.DB.Where("nip = ?", emailORnip).First(&user)
+		if user.Nip == "" {
+			hasil = false	
+		} else {
+			hasil = true	
+		}
 	} else {
-		return true
+		hasil = true
 	}
+	return hasil
 }
 
 func (idb *InDB) CekEmail(email string) bool{
@@ -29,18 +36,6 @@ func (idb *InDB) CekEmail(email string) bool{
 		user structs.User
 	)
 	isExsist := idb.DB.Where("email = ?", email).First(&user).Error
-	if isExsist == nil {
-		return false	
-	} else {
-		return true
-	}
-}
-
-func (idb *InDB) CekLogin(email string, password string) bool{
-	var (
-		user structs.User
-	)
-	isExsist := idb.DB.Where("email = ? AND password = ?", email, password).Find(&user).Error
 	if isExsist == nil {
 		return false	
 	} else {

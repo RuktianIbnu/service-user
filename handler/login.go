@@ -17,7 +17,7 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 		err = c.Bind(&user)
 	)
 
-	email := c.PostForm("email")
+	emailORnip := c.PostForm("emailORnip")
 	password := c.PostForm("password") 
 
 	if err != nil {
@@ -27,31 +27,35 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 		})
 	}
 
-	EmailIsExist := idb.CekEmailLogin(email)
+	EmailOrNipIsExist := idb.CekEmailOrNipLogin(emailORnip)
 	Pass := GetPwd(password) 
 
-	idb.DB.Select("password").Where(" email = ?", email).Find(&user)
-	passToString := user.Password
-	 
+	idb.DB.Where(" email = ?", emailORnip).First(&user)
+	if user.Email == "" {
+		idb.DB.Where(" nip = ?", emailORnip).First(&user)
+	}
+
+	passToString := user.Password 
 	matchPass := ComparePasswords(passToString, Pass) 
 
-	if EmailIsExist == false {
+	if EmailOrNipIsExist == false {
 		c.JSON(http.StatusUnauthorized, gin.H {
 			"status": "warning",
-			"pesan": "Email Tidak Terdaftar",
+			"pesan": "Email Atau Nip Tidak Terdaftar",
 		})
 	} else if matchPass == false {
 		c.JSON(http.StatusUnauthorized, gin.H {
 			"status": "warning",
 			"pesan": "Password Salah",
 		})
-	} else if matchPass == true && EmailIsExist == true {
+	} else if matchPass == true && EmailOrNipIsExist == true {
 		sign := jwt.New(jwt.GetSigningMethod("HS256")) // hs256 
 		
-		idb.DB.Where("email = ?", email).First(&user)
 		claims := sign.Claims.(jwt.MapClaims)
+		claims["ID"]		= user.ID
 		claims["nama"]		= user.Nama
 		claims["email"]		= user.Email
+		claims["nip"]		= user.Nip
 		claims["jabatan"]	= user.Jabatan
 		claims["role"]		= user.Role
 		claims["instansi"]	= user.Instansi
@@ -59,7 +63,7 @@ func (idb *InDB) LoginUser(c *gin.Context) {
 		token, err := sign.SignedString([]byte("secret"))
 
 		newUser.Token = token
-		update := idb.DB.Model(&user).Where("email = ?", email).Updates(newUser).Error
+		update := idb.DB.Model(&user).Where("id = ?", user.ID).Updates(newUser).Error
 		
 		if update != nil {
 			c.JSON(http.StatusInternalServerError, gin.H {
